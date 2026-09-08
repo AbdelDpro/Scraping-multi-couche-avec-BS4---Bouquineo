@@ -1,0 +1,15 @@
+# Environnement Python
+.venv/
+__pycache__/
+*.pyc
+
+# Données de travail (reconstructibles par la collecte)
+data/work/
+
+# Secrets
+.env
+
+# Éditeur / OS
+.DS_Store
+.vscode/
+.idea/
