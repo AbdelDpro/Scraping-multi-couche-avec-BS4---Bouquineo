@@ -21,11 +21,12 @@ que sur les fiches produit, pas sur les pages de liste.
 
 | Outil | Rôle | Justification |
 |---|---|---|
-| Python + `uv` | Langage et gestion d'environnement | ... |
-| `requests` | Requêtes HTTP | ... |
-| `BeautifulSoup4` | Parsing HTML | ... |
-| PostgreSQL | Stockage final | ... |
-| Docker | Exécution de PostgreSQL | ... |
+| Python + `uv` | Langage et gestion d'environnement | Gestion d'environnement et de dépendances, uv.lock garantit des versions identiques d'une machine à l'autre. |
+| `requests` | Requêtes HTTP | Requêtes HTTP, avec Session pour réutiliser la connexion sur 1 000 requêtes. |
+| `BeautifulSoup4` + `lxml` | Parsing HTML | Parsing HTML, `lxml` comme parseur rapide. |
+| PostgreSQL | Stockage final | Stockage relationnel, contrainte d'unicité sur l'UPC pour l'idempotence. |
+| Docker | Exécution de PostgreSQL | PostgreSQL reproductible sans installation locale. |
+| `structlog` | Journalisation structurée | Logs en paires clé-valeur exportables en JSON, filtrables et agrégeables — contrairement aux lignes de texte du module `logging` standard, qui exigent des expressions régulières pour être exploitées. |
 
 ---
 
