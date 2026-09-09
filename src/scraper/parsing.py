@@ -1,7 +1,14 @@
-# 1. Je reçois les classes CSS de l'élément
+from scraper.config import MAPPING_NOTES
+import structlog
 
-# 2. Je cherche laquelle correspond à une note connue
+logger = structlog.get_logger()
 
-# 3. Si je ne trouve rien, je loggue un WARNING et je rends une valeur neutre
+def convert_note(classes):
+    """Convertit les classes CSS en une note numérique."""
+    for mot in classes:
+        if mot in MAPPING_NOTES:
+            return MAPPING_NOTES[mot]
+    logger.warning("note inconnue", classes=classes)
 
-# 4. Je rends l'entier
+# Note inconnue, pour la gestion des erreurs en SQL et ses fonctions d'agrégation. Une absence de valeur ≠ valeur nulle.
+    return None 
