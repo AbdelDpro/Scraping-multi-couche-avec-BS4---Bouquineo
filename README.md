@@ -65,6 +65,12 @@ aucune directive.
 
 Absence de robot.txt ce qui signifie que le site s'en remet à la législation en vigueur dans le pays, sans apporter de précisions propres. Aussi par rapport à ce que supporte le serveur, et ce que serait le comportement normal d'un navigateur humain.
 
+### Nombre de pages
+
+Le nombre total de pages est lu sur la page elle-même (« Page 1 of 50 ») plutôt
+que codé en dur. Si le catalogue s'agrandit, la collecte suit sans modification
+du code. `MAX_PAGES = 60` sert uniquement de garde-fou contre une boucle infinie.
+
 ---
 
 ## Comportement du collecteur
@@ -92,7 +98,11 @@ Elle est encodée dans l'attribut `class` : `<p class="star-rating Three">`.
 Les cinq balises `<i class="icon-star">` sont présentes quel que soit le
 nombre d'étoiles affichées et ne portent aucune information.
 
-...
+La conversion se fait via un dictionnaire de correspondance (`MAPPING_NOTES`)
+défini dans `config.py`, qui associe chaque mot anglais à un entier. Si aucune
+classe ne correspond, la fonction journalise un WARNING et rend `None` plutôt
+que `0` : une note absente n'est pas une note de zéro, et `None` devient `NULL`
+en base, ce que les fonctions d'agrégation SQL ignorent au lieu de le compter.
 
 ### La page de liste ment par omission
 

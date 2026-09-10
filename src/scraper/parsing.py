@@ -2,6 +2,7 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 import structlog
 from scraper.config import MAPPING_NOTES
+import re
 
 logger = structlog.get_logger()
 
@@ -26,6 +27,24 @@ def convert_price(texte):
     chiffres = "".join(c for c in texte if c.isdigit() or c == ".")
     return float(chiffres)
 
+
+def read_number_of_pages(html):
+    """Lit le nombre total de pages depuis le texte "Page 1 of 50".
+
+    Rend None si le motif est absent : l'appelant decide quoi faire.
+    """
+    soup = BeautifulSoup(html, "lxml")
+    tag = soup.select_one("li.current")
+    if tag is None:
+        logger.warning("indicateur de pagination absent")
+        return None
+
+    correspondance = re.search(r"of\s+(\d+)", tag.text)
+    if correspondance is None:
+        logger.warning("format de pagination inattendu", texte=tag.text.strip())
+        return None
+
+    return int(correspondance.group(1))
 
 def parser_page_list(html, url_page):
     """Extrait les livres d'une page de liste.
