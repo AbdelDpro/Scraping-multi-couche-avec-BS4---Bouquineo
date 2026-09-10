@@ -107,11 +107,17 @@ en base, ce que les fonctions d'agrégation SQL ignorent au lieu de le compter.
 ### La page de liste ment par omission
 
 Elle affiche `In stock` sans quantité. La fiche produit indique
-`In stock (22 available)`.
+`In stock (22 available)`. Le nombre est extrait par expression régulière
+(`extraire_nombre`), qui rend `0` lorsqu'aucun nombre n'est présent — cas
+d'un livre en rupture.
 
 ### Trois champs de prix pour une seule information
 
-Ne garder que le TTC car information la plus utile et aussi car j'ai testé pour 5 livres qui ont tous HT = TTC, ainsi que Tax = 0.
+Les fiches exposent `Price (excl. tax)`, `Price (incl. tax)` et `Tax`.
+Vérification faite sur plusieurs livres : les deux prix sont toujours égaux
+et la taxe vaut systématiquement £0.00. Ces trois champs sont donc collectés
+tels quels, mais ne portent qu'une seule information réelle. Détail dans
+`NOTE_OBSERVATION.md`.
 
 ### Le titre n'est pas une clé
 

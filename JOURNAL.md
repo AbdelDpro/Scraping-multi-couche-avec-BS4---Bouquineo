@@ -28,3 +28,21 @@
   pas de séparateur de milliers). Vraie sur ce site, fausse en format européen —
   et l'erreur serait silencieuse. Hypothèse documentée dans la docstring plutôt
   que corrigée : le cas ne se présente pas ici.
+
+  - **Blocage :** modifications d'un fichier invisibles depuis le REPL, l'ImportError
+  se répétait à l'identique après correction. Cause : Python met les modules en
+  cache dans `sys.modules` et ne relit pas le fichier aux imports suivants.
+  Débloqué par : redémarrer le REPL. Règle retenue — modification de fichier =
+  redémarrage du REPL.
+
+- **Blocage :** `ValueError: could not convert string to float: ''` sur
+  `parser_fiche`. Deux causes empilées : clés de dictionnaire inventées
+  (`"Price HT"`) au lieu des libellés réels du site (`"Price (excl. tax)"`),
+  et `convert_price` qui plantait sur une chaîne sans chiffre. Débloqué par :
+  lire les libellés réels via un sélecteur, et rendre `convert_price` tolérante
+  (WARNING + `None`).
+
+- **Bug silencieux :** description dupliquée dans le résultat de `parser_fiche`.
+  Cause : le sélecteur `#product_description ~ p` prend tous les paragraphes
+  frères suivants, dont BeautifulSoup concatène le texte. Corrigé avec `+`
+  (frère immédiat). Aucune erreur levée — repéré uniquement en lisant le résultat.
