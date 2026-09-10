@@ -23,3 +23,8 @@
 - **Bloqué :** push refusé (`GH007`, email privé exposé). Débloqué par :
   adresse `noreply` GitHub + `git rebase --root --exec "git commit --amend
   --no-edit --reset-author"` pour réécrire les commits déjà faits.
+
+- **Constat :** `convert_prix` repose sur une hypothèse de format (point décimal,
+  pas de séparateur de milliers). Vraie sur ce site, fausse en format européen —
+  et l'erreur serait silencieuse. Hypothèse documentée dans la docstring plutôt
+  que corrigée : le cas ne se présente pas ici.
