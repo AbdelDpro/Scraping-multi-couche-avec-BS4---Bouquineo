@@ -194,7 +194,15 @@ bouquineo-scraper/
 
 ## Schéma de la base
 
-...
+### Stratégie de chargement
+
+Le chargement écrase les lignes existantes sur conflit d'UPC (`ON CONFLICT
+DO UPDATE`) : la base reflète l'état courant du catalogue concurrent, ce que
+demande la question métier.
+
+Limite assumée : l'historique est perdu. Un suivi de l'évolution du stock dans
+le temps demanderait une table historisée (SCD de type 2, avec `valid_from` /
+`valid_to`), hors du périmètre de ce mini-brief.
 
 ---
 

@@ -63,3 +63,7 @@
   Choix assumé : la contrainte d'unicité sur l'UPC en base neutralise les
   doublons au chargement. Le fichier de travail est un intermédiaire, pas la
   source de vérité.
+
+- **Blocage :** `docker` introuvable depuis WSL 2 alors que Docker Desktop
+  tourne sous Windows. Débloqué par : activer l'intégration WSL dans
+  Settings > Resources > WSL Integration, puis rouvrir le terminal.
