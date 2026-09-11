@@ -12,8 +12,8 @@ enrichissement depuis les fiches produit et chargement dans PostgreSQL.
 Répondre à la question métier : *sur quels titres le concurrent est-il en rupture
 ou en stock faible, et lesquels sont les mieux notés de son catalogue ?*
 
-Les trois informations manquantes (stock réel, UPC, nombre d'avis) n'existent
-que sur les fiches produit, pas sur les pages de liste.
+Les informations manquantes (stock réel, UPC, nombre d'avis, catégorie,
+description) n'existent que sur les fiches produit, pas sur les pages de liste.
 
 ---
 
@@ -75,7 +75,11 @@ du code. `MAX_PAGES = 60` sert uniquement de garde-fou contre une boucle infinie
 
 ## Comportement du collecteur
 
-- **User-Agent explicite :** Dictionnaire de 5 entrées + WARNING
+- **User-Agent explicite :** `Scraping/1.0 (etude de cas; contact: <ton URL de repo>)`
+  Identifie le robot et fournit un moyen de contact à l'administrateur du site.
+  Sans accents : les en-têtes HTTP sont en ASCII, un caractère accentué lève
+  une `UnicodeEncodeError` ou est mal transmis.
+
 - **Temporisation :** 0.5s secondes entre deux requêtes.
 
   Justification :  
@@ -126,7 +130,11 @@ tels quels, mais ne portent qu'une seule information réelle. Détail dans
 
 ### Le titre n'est pas une clé
 
-Le code UPC est retenu car c'est un ID unique qui évite les confusions et les doublons.
+Les fiches portent un identifiant UPC unique. Le titre ne peut pas servir de
+clé : deux livres différents peuvent le partager, et c'est précisément le
+problème que pose la responsable des achats (« comment rapprocher son catalogue
+du nôtre de façon fiable quand deux livres portent le même titre ? »). L'UPC est
+donc retenu comme clé primaire naturelle, ce qui rend le chargement idempotent.
 
 ### L'encodage
 
@@ -188,20 +196,47 @@ bouquineo-scraper/
 │       ├── parsing.py           # TRANSFORM : HTML → dicts
 │       ├── collect_listing.py   # collecteur 1 : boucle sur les 50 pages
 │       ├── collect_products.py  # collecteur 2 : 1000 fiches + reprise
-│       ├── storage.py           # LOAD (1) : écriture fichier + reprise
-│       ├── db.py                # LOAD (2) : PostgreSQL
+│       ├── storage.py           # LOAD (1) : écriture JSONL au fil de l'eau
+│       ├── db.py                # LOAD (2) : PostgreSQL + export CSV
 │       └── cli.py               # point d'entrée, arguments
 │
 ├── sql/
-│   └── schema.sql
+│   ├── schema.sql          # création de la table books
+│   └── queries.sql         # requêtes métier
 │
 └── data/
-    ├── work/               # ignoré — fichiers de travail, reprise
-    └── export/             # versionné — livrable CSV/JSON
+    ├── work/               # ignoré — livres.jsonl, fiches.jsonl
+    └── export/             # versionné — books.csv
 ```
 ---
 
+
 ## Schéma de la base
+
+Le schéma est dans `sql/schema.sql` et s'exécute avec :
+
+```bash
+uv run python -c "from scraper.db import creer_schema; creer_schema()"
+```
+
+Une seule table, `books`, avec la catégorie stockée en colonne texte. Le brief
+autorise un schéma simple ; une table de référence séparée n'apporterait rien
+ici, la catégorie ne portant aucune donnée propre (pas de description, pas de
+hiérarchie). Limite assumée : sans contrainte de clé étrangère, rien n'empêche
+une valeur incohérente d'entrer en base — la cohérence repose sur le code.
+
+Trois choix de modélisation :
+
+- **`upc TEXT PRIMARY KEY`** — clé naturelle issue du site, et non un
+  identifiant auto-incrémenté. C'est cette contrainte d'unicité qui rend le
+  chargement idempotent.
+- **`NUMERIC(10,2)` pour les montants**, jamais `FLOAT`. Les flottants
+  introduisent des erreurs d'arrondi binaires, inacceptables sur des prix.
+- **`rating SMALLINT` nullable** — cohérent avec le `None` renvoyé par
+  `convert_note` : une note inconnue n'est pas une note de zéro, et `NULL` est
+  ignoré par les fonctions d'agrégation au lieu de fausser les moyennes.
+
+Deux index couvrent les requêtes métier : `category` et `stock`.
 
 ### Stratégie de chargement
 
