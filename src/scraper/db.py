@@ -5,6 +5,7 @@ import structlog
 
 from scraper.config import DIR_WORK
 from scraper.storage import read_books
+import csv
 
 logger = structlog.get_logger()
 
@@ -13,6 +14,7 @@ DSN = "postgresql://bouquineo:bouquineo@localhost:5432/bouquineo"
 RACINE = Path(__file__).resolve().parents[2]
 FICHIER_SCHEMA = RACINE / "sql" / "schema.sql"
 FICHIER_FICHES = DIR_WORK / "fiches.jsonl"
+DIR_EXPORT = RACINE / "data" / "export"
 
 REQUETE_UPSERT = """
     INSERT INTO books (
@@ -72,3 +74,22 @@ def charger(source=FICHIER_FICHES):
 
     logger.info("chargement termine", charges=charges, ignorees=ignorees)
     return charges
+
+def exporter_csv(destination=None):
+    """Exporte le contenu de la table books en CSV."""
+    destination = destination or DIR_EXPORT / "books.csv"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+
+    with psycopg.connect(DSN) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM books ORDER BY upc;")
+            colonnes = [desc.name for desc in cur.description]
+            lignes = cur.fetchall()
+
+    with open(destination, "w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(colonnes)
+        writer.writerows(lignes)
+
+    logger.info("export csv", fichier=str(destination), lignes=len(lignes))
+    return len(lignes)
