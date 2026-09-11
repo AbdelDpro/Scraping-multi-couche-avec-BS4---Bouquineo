@@ -24,5 +24,6 @@ def fetch(url):
     response = _session.get(url, timeout=TIMEOUT)
 
     response.raise_for_status()
+    response.encoding = response.apparent_encoding
     logger.info("données récupérées", size=len(response.content), url=url)
     return response.text
