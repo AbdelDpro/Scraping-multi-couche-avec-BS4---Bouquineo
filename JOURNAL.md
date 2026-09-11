@@ -46,3 +46,20 @@
   Cause : le sélecteur `#product_description ~ p` prend tous les paragraphes
   frères suivants, dont BeautifulSoup concatène le texte. Corrigé avec `+`
   (frère immédiat). Aucune erreur levée — repéré uniquement en lisant le résultat.
+
+- 1 000 livres collectés depuis les 50 pages de liste,
+  avec l'URL de leur fiche produit.
+
+- 1 000 fiches produit collectées, 0 échec, en ~9
+  minutes (délai de 0,5 s entre requêtes, conforme à l'estimation initiale).
+
+- **Reprise sur interruption testée :** collecte interrompue par Ctrl-C après
+  35 fiches, relance de la même commande — les logs annoncent `deja_faites=35`
+  et seules les fiches restantes sont demandées. Aucune requête inutile envoyée
+  au site.
+
+- **Limite identifiée :** `collect_listing` n'est pas idempotent — deux
+  exécutions ajoutent les livres en double dans `livres.jsonl` (mode append).
+  Choix assumé : la contrainte d'unicité sur l'UPC en base neutralise les
+  doublons au chargement. Le fichier de travail est un intermédiaire, pas la
+  source de vérité.

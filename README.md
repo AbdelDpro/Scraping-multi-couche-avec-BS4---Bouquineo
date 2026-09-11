@@ -88,6 +88,11 @@ du code. `MAX_PAGES = 60` sert uniquement de garde-fou contre une boucle infinie
   pendant les dizaines de tests de développement, et pour la démonstration
   en soutenance (10 minutes).
 
+- **Reprise sur interruption** :  Au démarrage, `collect_products` relit le fichier de destination et construit l'ensemble des URL déjà traitées. Seules les fiches absentes de cet ensemble sont demandées. La comparaison porte sur l'URL de fiche et non sur l'UPC : l'URL est connue avant la requête, l'UPC seulement après parsing. 
+L'écriture se fait au fil de l'eau, une ligne JSON par fiche (format JSONL). Une interruption ne fait perdre au maximum que la fiche en cours, jamais le fichier entier — contrairement à un JSON classique, qui serait illisible sans son crochet fermant.
+
+- **Gestion des erreurs** : Chaque fiche est traitée dans un bloc isolé : une erreur est journalisée avec son URL et la collecte continue. Un compteur d'échecs **consécutifs** arrête la collecte au-delà de 20. Le choix du consécutif plutôt que du cumul est délibéré : des échecs dispersés sont du bruit normal, des échecs enchaînés signalent un site tombé ou modifié. Le compteur est remis à zéro à chaque succès.
+
 ---
 
 ## Pièges rencontrés
@@ -127,15 +132,30 @@ Le code UPC est retenu car c'est un ID unique qui évite les confusions et les d
 
 ## Installation et lancement
 
-...
+```bash
+git clone https://github.com/AbdelDpro/Scraping-multi-couche-avec-BS4---Bouquineo
+cd Scraping-multi-couche-avec-BS4---Bouquineo
+uv sync                         # dépendances + projet installé comme paquet
+docker compose up -d            # base PostgreSQL
+scraper tout                    # collecte complète (~9 min)
+```
+
+---
+
+## Utilisation
 
 ```bash
-git clone <url>
-cd Scraping
-uv sync          # Pour le coup, installe les dépendances ET le projet comme paquet. Le projet est déclaré comme paquet installable ([build-system] + packages = ["src/scraper"]), pour que les imports fonctionnent quel que soit le dossier courant. Plus de stabilité dans les tests.
-docker compose up -d
-...
+scraper --help                  # affiche les options
+scraper listing                 # collecte les 50 pages de liste
+scraper produits                # collecte les 1 000 fiches produit
+scraper tout                    # enchaîne les deux étapes
+
+scraper listing --limit 2       # mode échantillon : 2 pages
+scraper produits --limit 10     # mode échantillon : 10 fiches
 ```
+
+La commande `scraper` est déclarée dans `pyproject.toml` (`[project.scripts]`)
+et installée par `uv sync`. Elle fonctionne depuis n'importe quel dossier.
 
 ---
 
