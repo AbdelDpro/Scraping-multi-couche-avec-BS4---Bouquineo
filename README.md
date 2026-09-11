@@ -128,6 +128,15 @@ tels quels, mais ne portent qu'une seule information réelle. Détail dans
 
 Le code UPC est retenu car c'est un ID unique qui évite les confusions et les doublons.
 
+### L'encodage
+
+Les pages ne déclarent pas leur encodage dans les en-têtes HTTP. `requests`
+retombe alors sur Latin-1, alors que le contenu est en UTF-8 : les caractères
+accentués et le symbole `£` sont corrompus (`CafÃ©`, `Â£51.77`). Corrigé par
+`response.encoding = response.apparent_encoding`, qui détecte l'encodage réel
+depuis le contenu. Aucune erreur n'est levée — le problème n'a été repéré qu'en
+relisant les données chargées en base.
+
 ---
 
 ## Installation et lancement
@@ -208,4 +217,21 @@ le temps demanderait une table historisée (SCD de type 2, avec `valid_from` /
 
 ## Requêtes répondant à la question métier
 
-...
+Les requêtes sont dans `sql/queries.sql` et s'exécutent avec :
+
+```bash
+docker compose exec -T db psql -U bouquineo -d bouquineo < sql/queries.sql
+```
+
+Résultats sur la collecte du 11/09/2026 :
+
+| Question | Résultat |
+|---|---|
+| Titres en rupture (`stock = 0`) | aucun — le concurrent a du stock sur l'ensemble du catalogue |
+| Titres en stock faible (`stock < 5`) | 355 titres |
+| Titres bien notés **et** en stock faible (`rating >= 4` et `stock < 5`) | 119 titres |
+| Titres avec au moins un avis | 0 sur 1 000 |
+
+La requête croisée est celle qui répond le plus directement à la question de la
+responsable des achats : elle identifie les titres où le concurrent est à la
+fois attractif et exposé.

@@ -67,3 +67,17 @@
 - **Blocage :** `docker` introuvable depuis WSL 2 alors que Docker Desktop
   tourne sous Windows. Débloqué par : activer l'intégration WSL dans
   Settings > Resources > WSL Integration, puis rouvrir le terminal.
+
+- **Blocage :** `uv add psycopg[binary]` rejeté par zsh (`no matches found`).
+  Cause : zsh interprète les crochets comme un motif de fichier. Débloqué par :
+  entourer l'argument de guillemets.
+
+- **Bug silencieux découvert tardivement :** caractères accentués corrompus en
+  base (`CafÃ©` au lieu de `Café`, `Â£` au lieu de `£`). Cause : sans en-tête
+  d'encodage explicite, `requests` suppose Latin-1 alors que les pages sont en
+  UTF-8. Débloqué par : `response.encoding = response.apparent_encoding` dans
+  `fetch`. Repéré seulement en lisant les résultats SQL, jamais par une erreur.
+  Collecte complète relancée après correction.
+
+- **Chargement idempotent vérifié :** deux exécutions successives de `charger()`
+  laissent 1 000 lignes en base grâce à `ON CONFLICT (upc) DO UPDATE`.
