@@ -81,3 +81,43 @@
 
 - **Chargement idempotent vérifié :** deux exécutions successives de `charger()`
   laissent 1 000 lignes en base grâce à `ON CONFLICT (upc) DO UPDATE`.
+
+  ## Clôture
+
+### Livré
+
+- Collecteur de pages de liste et collecteur de fiches produit, tous deux
+  relançables par une commande unique (`scraper listing`, `scraper produits`,
+  `scraper tout`).
+- 1 000 livres en base PostgreSQL avec UPC, stock réel, note numérique,
+  nombre d'avis et catégorie.
+- Reprise sur interruption démontrable : interruption par Ctrl-C, relance de la
+  même commande, seules les fiches manquantes sont demandées.
+- Temporisation de 0,5 s justifiée et User-Agent explicite.
+- Mode échantillon paramétrable (`--limit`).
+- Chargement idempotent : un fichier source de 1 020 lignes (dont 20 doublons
+  issus d'un test) produit 1 000 lignes en base grâce à la contrainte d'unicité
+  sur l'UPC.
+
+### Ce que je retiens
+
+Le plus instructif n'a pas été le scraping mais les **bugs silencieux** : quatre
+rencontrés, aucun n'a levé d'erreur. La note encodée en classe CSS, les URL
+relatives qui produisent des 404 propres, la description dupliquée par un
+sélecteur trop large, et l'encodage Latin-1/UTF-8 découvert seulement en
+relisant les données en base. Un script qui tourne sans erreur ne prouve rien.
+
+### Mis de côté, et pourquoi
+
+- **Noms de fonctions incohérents** (français, anglais, formes mixtes). Chaque
+  renommage en cours de route a cassé des imports, j'ai préféré finir le
+  fonctionnel. À reprendre en un passage unique.
+- **Modélisation à une seule table**, catégorie en colonne texte. Suffisant
+  pour le brief ; une table de référence apporterait une contrainte d'intégrité
+  que le code assure aujourd'hui seul.
+- **Pas d'historisation.** Le chargement écrase l'état précédent. Suivre
+  l'évolution du stock dans le temps demanderait une table historisée
+  (SCD de type 2).
+- **`collect_listing` n'est pas idempotent** : deux exécutions ajoutent les
+  livres en double dans le fichier de travail. Neutralisé en base par la clé
+  primaire, mais le collecteur de fiches traite alors des URL en double.
